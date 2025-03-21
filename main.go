@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"terrabutler/cmd"
 )
 
 func main() {
-	fmt.Printf("Hello world\n")
+	cmd.Execute()
 }
