@@ -5,5 +5,7 @@ import (
 )
 
 func main() {
+
+	// Executa o CLI
 	cmd.Execute()
 }
