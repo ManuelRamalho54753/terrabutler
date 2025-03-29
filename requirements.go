@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 )
 
 func checkRequirements() {
@@ -17,13 +16,6 @@ func checkRequirements() {
 	root := os.Getenv("TERRABUTLER_ROOT")
 	if root == "" || !pathExists(root) {
 		fmt.Println("Terrabutler can't determine the root folder of your project or it doesn't exist.")
-		os.Exit(1)
-	}
-
-	// Check if settings.yml exists in configs folder
-	settingsPath := filepath.Join(root, "configs", "settings.yml")
-	if !pathExists(settingsPath) {
-		fmt.Println("Terrabutler can't find your settings file.")
 		os.Exit(1)
 	}
 }
