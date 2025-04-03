@@ -2,10 +2,13 @@ package main
 
 import (
 	"terrabutler/cmd"
+	"terrabutler/logger"
 )
 
 func main() {
 
-	// Executa o CLI
+	logger.InitLogger()
+	defer logger.Log.Sync()
+
 	cmd.Execute()
 }
