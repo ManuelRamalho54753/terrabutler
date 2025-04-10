@@ -1,0 +1,21 @@
+general:
+  organization: "my-org"
+  secrets_key_id: "my-aws-kms-key-id"
+
+sites:
+  ordered:
+    - site1
+    - site2
+    - inception
+
+environments:
+  default:
+    domain: "example.com"
+    name: "dev"
+    profile_name: "default"
+    region: "eu-west-1"
+
+  temporary:
+    secrets:
+      firebase_credentials: "base64-encoded-json"
+      mail_password: "supersecretpassword"

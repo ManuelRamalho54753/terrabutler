@@ -1,0 +1,6 @@
+site_name      = "{{ .Site }}"
+organization   = "{{ .Org }}"
+environment    = "{{ .Env }}"
+firebase_creds = "{{ .FirebaseCreds }}"
+mail_password  = "{{ .MailPassword }}"
+secret_token   = "{{ .SecretToken }}"

@@ -1,7 +1,8 @@
-package main
+package settings
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
@@ -64,4 +65,20 @@ func ValidateSettings(settings *Settings) error {
 		return fmt.Errorf("default environment name is required")
 	}
 	return nil
+}
+
+func GetSettings() *Settings {
+	root := os.Getenv("TERRABUTLER_ROOT")
+	settingsPath := fmt.Sprintf("%s/configs/settings.yml", root)
+
+	settings, err := LoadSettings(settingsPath)
+	if err != nil {
+		panic(fmt.Errorf("error loading settings: %w", err))
+	}
+
+	if err := ValidateSettings(settings); err != nil {
+		panic(fmt.Errorf("invalid settings: %w", err))
+	}
+
+	return settings
 }
