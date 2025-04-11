@@ -115,4 +115,47 @@ func GenerateVarFiles(env string) {
 		Region:       region,
 		Profile:      profile,
 	})
-	
+
+	// Generate site tfvars
+	for _, site := range sites {
+		file := filepath.Join(paths["variables"], fmt.Sprintf("%s-%s-%s.tfvars", org, env, site))
+		fh, err := os.Create(file)
+		if err != nil {
+			logger.Log.Error("Error creating site tfvars file", zapError(err))
+			continue
+		}
+		defer fh.Close()
+
+		tmplSite.Execute(fh, TemplateData{
+			Env:                 env,
+			Site:                site,
+			Password:            encryptedPassword,
+			Organization:        org,
+			FirebaseCredentials: firebase,
+			MailPassword:        mail,
+		})
+	}
+}
+
+func contains(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+func remove(slice []string, s string) []string {
+	var result []string
+	for _, item := range slice {
+		if item != s {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
+func zapError(err error) any {
+	return map[string]any{"error": err.Error()}
+}
