@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"terrabutler/cmd"
 	"terrabutler/logger"
 	"terrabutler/variables"
@@ -19,13 +20,17 @@ var tfCmd = &cobra.Command{
 }
 
 var tfInitCmd = &cobra.Command{
-	Use:   "init [site]",
-	Short: "Initialize Terraform for a specific site",
-	Args:  cobra.ExactArgs(1),
+	Use:   "init",
+	Short: "Initialize Terraform for the selected environment",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		checkRequirements()
-		site := args[0]
-		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
+		envName := GetSelectedEnv()
+		if envName == "" {
+			fmt.Println("No environment selected. Please use `terrabutler env select [name]` first.")
+			os.Exit(1)
+		}
+		execTerraformWithSDK(envName, func(tf *tfexec.Terraform) error {
 			return tf.Init(context.Background(), tfexec.Upgrade(true), tfexec.Reconfigure(true))
 		})
 	},
@@ -126,9 +131,9 @@ func execTerraformWithSDK(site string, action func(*tfexec.Terraform) error) {
 		os.Exit(1)
 	}
 
-	sitePath := filepath.Join(root, fmt.Sprintf("site_%s", site))
+	sitePath := filepath.Join(root, fmt.Sprintf("environments/%s", site))
 	if _, err := os.Stat(sitePath); os.IsNotExist(err) {
-		logger.Log.Errorf("Site directory does not exist: %s", sitePath)
+		logger.Log.Errorf("Environment directory does not exist: %s", sitePath)
 		os.Exit(1)
 	}
 
@@ -143,7 +148,15 @@ func execTerraformWithSDK(site string, action func(*tfexec.Terraform) error) {
 		os.Exit(1)
 	}
 
-	logger.Log.Infof("Terraform command executed successfully for site: %s", site)
+	logger.Log.Infof("Terraform command executed successfully for environment: %s", site)
+}
+
+func GetSelectedEnv() string {
+	data, err := os.ReadFile(".terrabutler_env")
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
 }
 
 func init() {

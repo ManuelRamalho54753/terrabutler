@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -19,6 +21,10 @@ var envNewCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
+		if !isValidEnvName(name) {
+			fmt.Println("Invalid environment name. Use only lowercase letters, numbers, hyphens or underscores.")
+			os.Exit(1)
+		}
 		if err := createEnv(name); err != nil {
 			fmt.Println("Error creating environment:", err)
 			os.Exit(1)
@@ -106,6 +112,69 @@ func createEnv(name string) error {
 	return os.MkdirAll(path, os.ModePerm)
 }
 
+var envRenameCmd = &cobra.Command{
+	Use:   "rename [old] [new]",
+	Short: "Rename an existing environment",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		oldName := args[0]
+		newName := args[1]
+
+		if !isValidEnvName(newName) {
+			fmt.Println("Invalid new environment name. Use only lowercase letters, numbers, hyphens or underscores.")
+			return
+		}
+
+		envsPath := filepath.Join(".", "environments")
+		oldPath := filepath.Join(envsPath, oldName)
+		newPath := filepath.Join(envsPath, newName)
+
+		if _, err := os.Stat(oldPath); os.IsNotExist(err) {
+			fmt.Printf("Ambiente \"%s\" não existe.\n", oldName)
+			return
+		}
+		if _, err := os.Stat(newPath); err == nil {
+			fmt.Printf("Já existe um ambiente chamado \"%s\".\n", newName)
+			return
+		}
+		if err := os.Rename(oldPath, newPath); err != nil {
+			fmt.Println("Erro ao renomear:", err)
+			return
+		}
+		fmt.Printf("Ambiente \"%s\" foi renomeado para \"%s\" com sucesso.\n", oldName, newName)
+		selected, err := GetSelectedEnv()
+		if err == nil && selected == oldName {
+			SetSelectedEnv(newName)
+			fmt.Println("Ambiente selecionado foi atualizado para o novo nome.")
+		}
+	},
+}
+
+func GetSelectedEnv() (string, error) {
+	data, err := os.ReadFile(".terrabutler_env")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(data)), nil
+}
+
+func SetSelectedEnv(env string) error {
+	return os.WriteFile(".terrabutler_env", []byte(env), 0644)
+}
+
+func isValidEnvName(name string) bool {
+	matched, _ := regexp.MatchString(`^[a-z0-9_-]+$`, name)
+	return matched
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Show the version of terrabutler",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("terrabutler version 1.0.0")
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(envCmd)
 	envCmd.AddCommand(envNewCmd)
@@ -113,4 +182,6 @@ func init() {
 	envCmd.AddCommand(envDeleteCmd)
 	envCmd.AddCommand(envSelectCmd)
 	envCmd.AddCommand(envShowCmd)
+	envCmd.AddCommand(envRenameCmd)
+	RootCmd.AddCommand(versionCmd)
 }
