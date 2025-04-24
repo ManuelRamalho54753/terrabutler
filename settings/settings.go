@@ -40,7 +40,7 @@ type Settings struct {
 	} `koanf:"environments"`
 }
 
-// LoadSettings loads settings using koanf from settings.yml
+// LoadSettings loads settings using koanf from settings.yaml
 func LoadSettings(path string) (*Settings, error) {
 	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
 		return nil, fmt.Errorf("failed to load settings file: %w", err)

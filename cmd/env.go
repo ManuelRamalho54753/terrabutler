@@ -21,12 +21,8 @@ var envNewCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
-		if !isValidEnvName(name) {
-			fmt.Println("Invalid environment name. Use only lowercase letters, numbers, hyphens or underscores.")
-			os.Exit(1)
-		}
-		if err := createEnv(name); err != nil {
-			fmt.Println("Error creating environment:", err)
+		if err := RunEnvNew(name); err != nil {
+			fmt.Println(err.Error())
 			os.Exit(1)
 		}
 		fmt.Println("Environment created successfully:", name)
@@ -104,7 +100,7 @@ var envShowCmd = &cobra.Command{
 	},
 }
 
-func createEnv(name string) error {
+func CreateEnv(name string) error {
 	path := filepath.Join("./environments", name)
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		return fmt.Errorf("the environment '%s' already exists", name)
@@ -120,7 +116,7 @@ var envRenameCmd = &cobra.Command{
 		oldName := args[0]
 		newName := args[1]
 
-		if !isValidEnvName(newName) {
+		if !IsValidEnvName(newName) {
 			fmt.Println("Invalid new environment name. Use only lowercase letters, numbers, hyphens or underscores.")
 			return
 		}
@@ -162,9 +158,16 @@ func SetSelectedEnv(env string) error {
 	return os.WriteFile(".terrabutler_env", []byte(env), 0644)
 }
 
-func isValidEnvName(name string) bool {
+func IsValidEnvName(name string) bool {
 	matched, _ := regexp.MatchString(`^[a-z0-9_-]+$`, name)
 	return matched
+}
+
+func RunEnvNew(name string) error {
+	if !IsValidEnvName(name) {
+		return fmt.Errorf("Invalid environment name. Use only lowercase letters, numbers, hyphens or underscores.")
+	}
+	return CreateEnv(name)
 }
 
 var versionCmd = &cobra.Command{
@@ -173,6 +176,14 @@ var versionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("terrabutler version 1.0.0")
 	},
+}
+
+func EnvCmd() *cobra.Command {
+	return envCmd
+}
+
+func EnvRenameCmd() *cobra.Command {
+	return envRenameCmd
 }
 
 func init() {

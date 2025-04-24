@@ -20,8 +20,8 @@ func checkRequirements() {
 		logger.Log.Fatal("Terrabutler can't determine the root folder of your project or it doesn't exist.")
 	}
 
-	// Check if settings.yml exists
-	settingsPath := filepath.Join(root, "configs", "settings.yml")
+	// Check if settings.yaml exists
+	settingsPath := filepath.Join(root, "configs", "settings.yaml")
 	if !utils.PathExists(settingsPath) {
 		logger.Log.Fatal("Terrabutler can't find your settings file.")
 	}
