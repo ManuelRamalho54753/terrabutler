@@ -76,8 +76,8 @@ func GenerateVarFiles(env string) {
 	}
 
 	sites := cfg.Sites.Ordered
-	if contains(sites, "inception") {
-		sites = remove(sites, "inception")
+	if Contains(sites, "inception") {
+		sites = Remove(sites, "inception")
 	}
 
 	firebase := cfg.Environments.Temporary.Secrets.FirebaseCredentials
@@ -137,7 +137,7 @@ func GenerateVarFiles(env string) {
 	}
 }
 
-func contains(slice []string, s string) bool {
+func Contains(slice []string, s string) bool {
 	for _, item := range slice {
 		if item == s {
 			return true
@@ -146,7 +146,7 @@ func contains(slice []string, s string) bool {
 	return false
 }
 
-func remove(slice []string, s string) []string {
+func Remove(slice []string, s string) []string {
 	var result []string
 	for _, item := range slice {
 		if item != s {
