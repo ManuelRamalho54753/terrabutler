@@ -1,4 +1,4 @@
-package main
+package requirements
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 	"terrabutler/utils"
 )
 
-func checkRequirements() {
+func CheckRequirements() {
 	// Check if TERRABUTLER_ENABLE is set to "true"
 	if os.Getenv("TERRABUTLER_ENABLE") != "true" {
 		logger.Log.Fatal("Terrabutler is not currently enabled on this folder.")

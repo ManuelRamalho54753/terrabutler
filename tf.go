@@ -8,6 +8,7 @@ import (
 	"strings"
 	"terrabutler/cmd"
 	"terrabutler/logger"
+	"terrabutler/requirements"
 	"terrabutler/variables"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
@@ -24,7 +25,7 @@ var tfInitCmd = &cobra.Command{
 	Short: "Initialize Terraform for the selected environment",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		checkRequirements()
+		requirements.CheckRequirements()
 		envName := GetSelectedEnv()
 		if envName == "" {
 			fmt.Println("No environment selected. Please use `terrabutler env select [name]` first.")
@@ -41,7 +42,7 @@ var tfApplyCmd = &cobra.Command{
 	Short: "Run terraform apply for a specific site",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		checkRequirements()
+		requirements.CheckRequirements()
 		site := args[0]
 		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
 			return tf.Apply(context.Background())
@@ -54,7 +55,7 @@ var tfDestroyCmd = &cobra.Command{
 	Short: "Run terraform destroy for a specific site",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		checkRequirements()
+		requirements.CheckRequirements()
 		site := args[0]
 		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
 			return tf.Destroy(context.Background())
@@ -67,7 +68,7 @@ var tfOutputCmd = &cobra.Command{
 	Short: "Show Terraform outputs for a specific site",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		checkRequirements()
+		requirements.CheckRequirements()
 		site := args[0]
 		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
 			outputs, err := tf.Output(context.Background())
@@ -87,7 +88,7 @@ var tfShowCmd = &cobra.Command{
 	Short: "Show Terraform state for a specific site",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		checkRequirements()
+		requirements.CheckRequirements()
 		site := args[0]
 		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
 			output, err := tf.Show(context.Background())
@@ -105,7 +106,7 @@ var tfRefreshCmd = &cobra.Command{
 	Short: "Refresh Terraform state for a specific site",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		checkRequirements()
+		requirements.CheckRequirements()
 		site := args[0]
 		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
 			return tf.Refresh(context.Background())

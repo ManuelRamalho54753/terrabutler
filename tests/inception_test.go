@@ -13,46 +13,79 @@ import (
 )
 
 func init() {
-	// Create a temporary logger just for testing
+	// Logger temporário para testes
 	l, _ := zap.NewDevelopment()
 	logger.Log = l.Sugar()
+}
+
+// ------------------------------
+// HELPERS
+// ------------------------------
+
+// Cria um settings.yml válido e backend.tfvars simulado
+func createTestSettingsAndBackend(tempDir string) {
+	os.MkdirAll(filepath.Join(tempDir, "configs"), 0755)
+	os.WriteFile(filepath.Join(tempDir, "configs", "settings.yml"), []byte(`
+general:
+  organization: testorg
+  secrets_key_id: dummy-key
+sites:
+  ordered: ["site1"]
+environments:
+  default:
+    domain: "test.com"
+    name: "dev"
+    profile_name: "default"
+    region: "us-west-1"
+  permanent: []
+  temporary:
+    secrets:
+      firebase_credentials: "abc"
+      mail_password: "123"
+`), 0644)
+
+	os.MkdirAll(filepath.Join(tempDir, "backends"), 0755)
+	os.WriteFile(filepath.Join(tempDir, "backends", "testorg-dev-inception.tfvars"), []byte(""), 0644)
+
+	os.MkdirAll(filepath.Join(tempDir, "site_inception"), 0755)
 }
 
 // ------------------------------
 // TESTS FOR InitInception
 // ------------------------------
 
-// Test that InitInception creates the site_inception directory when it does not exist
 func TestInitInception_Success(t *testing.T) {
 	tempDir := t.TempDir()
 	os.Setenv("TERRABUTLER_ROOT", tempDir)
 
-	sitePath := filepath.Join(tempDir, "site_inception")
-	os.RemoveAll(sitePath)
+	createTestSettingsAndBackend(tempDir)
 
 	inception.InitInception()
 
-	if _, err := os.Stat(sitePath); os.IsNotExist(err) {
-		t.Errorf("Expected site_inception to be created at %s", sitePath)
+	envFile := filepath.Join(tempDir, "site_inception", ".terraform", "environment")
+	if _, err := os.Stat(envFile); os.IsNotExist(err) {
+		t.Errorf("Expected .terraform/environment to be created at %s", envFile)
 	}
 }
 
-// Test that InitInception does nothing if the site_inception directory already exists
 func TestInitInception_AlreadyExists(t *testing.T) {
 	tempDir := t.TempDir()
 	os.Setenv("TERRABUTLER_ROOT", tempDir)
 
-	sitePath := filepath.Join(tempDir, "site_inception")
-	os.MkdirAll(sitePath, 0755)
+	createTestSettingsAndBackend(tempDir)
 
-	inception.InitInception() // Should log info but not fail
+	// Cria manualmente a estrutura de init
+	terraformDir := filepath.Join(tempDir, "site_inception", ".terraform")
+	os.MkdirAll(terraformDir, 0755)
+	os.WriteFile(filepath.Join(terraformDir, "environment"), []byte("dev"), 0644)
+
+	inception.InitInception() // Não deve fazer nada (já existe)
 }
 
 // ------------------------------
 // TESTS FOR InceptionInitNeeded
 // ------------------------------
 
-// Test that InceptionInitNeeded fails (exits) if site_inception directory is missing
 func TestInceptionInitNeeded_FailsWhenMissing(t *testing.T) {
 	if os.Getenv("TEST_CHILD") == "1" {
 		tempDir := t.TempDir()
@@ -66,20 +99,20 @@ func TestInceptionInitNeeded_FailsWhenMissing(t *testing.T) {
 	err := cmd.Run()
 
 	if err == nil {
-		t.Fatal("Expected failure due to missing site_inception, but got nil")
+		t.Fatal("Expected failure due to missing .terraform/environment, but got nil")
 	}
 	if exitErr, ok := err.(*exec.ExitError); !ok || exitErr.ExitCode() == 0 {
-		t.Fatal("Expected non-zero exit code due to missing site_inception")
+		t.Fatal("Expected non-zero exit code due to missing .terraform/environment")
 	}
 }
 
-// Test that InceptionInitNeeded succeeds if site_inception directory exists
 func TestInceptionInitNeeded_SuccessWhenExists(t *testing.T) {
 	tempDir := t.TempDir()
 	os.Setenv("TERRABUTLER_ROOT", tempDir)
 
-	sitePath := filepath.Join(tempDir, "site_inception")
-	os.MkdirAll(sitePath, 0755)
+	terraformDir := filepath.Join(tempDir, "site_inception", ".terraform")
+	os.MkdirAll(terraformDir, 0755)
+	os.WriteFile(filepath.Join(terraformDir, "environment"), []byte("dev"), 0644)
 
-	inception.InceptionInitNeeded() // Should pass without error
+	inception.InceptionInitNeeded() // Não deve falhar
 }

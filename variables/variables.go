@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
-	"text/template"
-
 	"terrabutler/logger"
 	"terrabutler/settings"
 	"terrabutler/utils"
+	"text/template"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -32,7 +32,7 @@ func GeneratePassword(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)
 	for i := range b {
-		b[i] = charset[i%len(charset)]
+		b[i] = charset[rand.Intn(len(charset))]
 	}
 	return string(b)
 }
