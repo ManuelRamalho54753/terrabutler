@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"terrabutler/variables"
+	"github.com/montblu/terrabutler/internal/variables"
 )
 
 // ------------------------------
@@ -81,7 +81,7 @@ func TestRemove_NotFound(t *testing.T) {
 // ------------------------------
 
 func TestGenerateEncryptedPassword_Base64Encoded(t *testing.T) {
-	// Essa função não testa realmente AWS, mas testa se o resultado parece codificado
+
 	pw := variables.GeneratePassword(10)
 	encoded := base64.StdEncoding.EncodeToString([]byte(pw))
 

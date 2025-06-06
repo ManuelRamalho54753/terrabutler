@@ -7,10 +7,11 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"terrabutler/logger"
-	"terrabutler/settings"
-	"terrabutler/utils"
 	"text/template"
+
+	"github.com/montblu/terrabutler/internal/logger"
+	"github.com/montblu/terrabutler/internal/settings"
+	"github.com/montblu/terrabutler/internal/utils"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"

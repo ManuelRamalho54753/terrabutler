@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"terrabutler/settings"
+	"github.com/montblu/terrabutler/internal/settings"
 )
 
 // ------------------------------
-// TESTES PARA LoadSettings
+// TESTEs for LoadSettings
 // ------------------------------
 
 func TestLoadSettings_ValidFile(t *testing.T) {
@@ -62,7 +62,7 @@ func TestLoadSettings_InvalidFile(t *testing.T) {
 }
 
 // ------------------------------
-// TESTES PARA ValidateSettings
+// TESTS FOR ValidateSettings
 // ------------------------------
 
 func TestValidateSettings_Success(t *testing.T) {
@@ -111,7 +111,7 @@ func TestValidateSettings_MissingDefaultEnvName(t *testing.T) {
 }
 
 // ------------------------------
-// TESTES PARA GetSettings (panics esperados)
+// TESTS FOR GetSettings (panics expected)
 // ------------------------------
 
 func TestGetSettings_PanicOnInvalidPath(t *testing.T) {

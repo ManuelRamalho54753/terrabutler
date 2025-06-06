@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"terrabutler/utils"
+	"github.com/montblu/terrabutler/internal/utils"
 )
 
 // ------------------------------

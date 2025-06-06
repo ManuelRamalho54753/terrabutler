@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"terrabutler/utils"
-	"terrabutler/variables"
+
+	"github.com/montblu/terrabutler/internal/utils"
+	"github.com/montblu/terrabutler/internal/variables"
 
 	"github.com/spf13/cobra"
 )
@@ -27,7 +28,7 @@ var variablesCmd = &cobra.Command{
 		}
 
 		variables.GenerateVarFiles(env)
-		fmt.Printf("✅ Variable files for environment '%s' generated successfully.\n", env)
+		fmt.Printf("Variable files for environment '%s' generated successfully.\n", env)
 	},
 }
 

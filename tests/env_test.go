@@ -2,8 +2,9 @@ package tests
 
 import (
 	"os"
-	"terrabutler/cmd"
 	"testing"
+
+	"github.com/montblu/terrabutler/internal/cmd"
 
 	"github.com/spf13/cobra"
 )

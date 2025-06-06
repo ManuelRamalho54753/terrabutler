@@ -6,14 +6,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	"terrabutler/inception"
-	"terrabutler/logger"
+	"github.com/montblu/terrabutler/internal/inception"
+	"github.com/montblu/terrabutler/internal/logger"
 
 	"go.uber.org/zap"
 )
 
 func init() {
-	// Logger temporário para testes
+	// Temporary logger for tests
 	l, _ := zap.NewDevelopment()
 	logger.Log = l.Sugar()
 }
@@ -22,10 +22,10 @@ func init() {
 // HELPERS
 // ------------------------------
 
-// Cria um settings.yml válido e backend.tfvars simulado
-func createTestSettingsAndBackend(tempDir string) {
-	os.MkdirAll(filepath.Join(tempDir, "configs"), 0755)
-	os.WriteFile(filepath.Join(tempDir, "configs", "settings.yml"), []byte(`
+func createTestSettingsAndBackend(tempDir string, t *testing.T) {
+	t.Helper()
+
+	settings := `Erro ao carregar ficheiro settings.yml:")
 general:
   organization: testorg
   secrets_key_id: dummy-key
@@ -42,12 +42,28 @@ environments:
     secrets:
       firebase_credentials: "abc"
       mail_password: "123"
-`), 0644)
+`
 
-	os.MkdirAll(filepath.Join(tempDir, "backends"), 0755)
-	os.WriteFile(filepath.Join(tempDir, "backends", "testorg-dev-inception.tfvars"), []byte(""), 0644)
+	settingsPath := filepath.Join(tempDir, "configs")
+	if err := os.MkdirAll(settingsPath, 0755); err != nil {
+		t.Fatalf("failed to create configs dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(settingsPath, "settings.yml"), []byte(settings), 0644); err != nil {
+		t.Fatalf("failed to write settings.yml: %v", err)
+	}
 
-	os.MkdirAll(filepath.Join(tempDir, "site_inception"), 0755)
+	backendPath := filepath.Join(tempDir, "backends")
+	if err := os.MkdirAll(backendPath, 0755); err != nil {
+		t.Fatalf("failed to create backends dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(backendPath, "testorg-dev-inception.tfvars"), []byte(""), 0644); err != nil {
+		t.Fatalf("failed to write backend tfvars: %v", err)
+	}
+
+	sitePath := filepath.Join(tempDir, "site_inception")
+	if err := os.MkdirAll(sitePath, 0755); err != nil {
+		t.Fatalf("failed to create site_inception dir: %v", err)
+	}
 }
 
 // ------------------------------
@@ -58,7 +74,7 @@ func TestInitInception_Success(t *testing.T) {
 	tempDir := t.TempDir()
 	os.Setenv("TERRABUTLER_ROOT", tempDir)
 
-	createTestSettingsAndBackend(tempDir)
+	createTestSettingsAndBackend(tempDir, t)
 
 	inception.InitInception()
 
@@ -72,14 +88,17 @@ func TestInitInception_AlreadyExists(t *testing.T) {
 	tempDir := t.TempDir()
 	os.Setenv("TERRABUTLER_ROOT", tempDir)
 
-	createTestSettingsAndBackend(tempDir)
+	createTestSettingsAndBackend(tempDir, t)
 
-	// Cria manualmente a estrutura de init
 	terraformDir := filepath.Join(tempDir, "site_inception", ".terraform")
-	os.MkdirAll(terraformDir, 0755)
-	os.WriteFile(filepath.Join(terraformDir, "environment"), []byte("dev"), 0644)
+	if err := os.MkdirAll(terraformDir, 0755); err != nil {
+		t.Fatalf("failed to create .terraform dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(terraformDir, "environment"), []byte("dev"), 0644); err != nil {
+		t.Fatalf("failed to create environment file: %v", err)
+	}
 
-	inception.InitInception() // Não deve fazer nada (já existe)
+	inception.InitInception() // Should not do anything, already exists
 }
 
 // ------------------------------
@@ -111,8 +130,12 @@ func TestInceptionInitNeeded_SuccessWhenExists(t *testing.T) {
 	os.Setenv("TERRABUTLER_ROOT", tempDir)
 
 	terraformDir := filepath.Join(tempDir, "site_inception", ".terraform")
-	os.MkdirAll(terraformDir, 0755)
-	os.WriteFile(filepath.Join(terraformDir, "environment"), []byte("dev"), 0644)
+	if err := os.MkdirAll(terraformDir, 0755); err != nil {
+		t.Fatalf("failed to create .terraform dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(terraformDir, "environment"), []byte("dev"), 0644); err != nil {
+		t.Fatalf("failed to create environment file: %v", err)
+	}
 
-	inception.InceptionInitNeeded() // Não deve falhar
+	inception.InceptionInitNeeded()
 }

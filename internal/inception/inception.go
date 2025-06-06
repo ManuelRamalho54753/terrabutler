@@ -5,9 +5,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"terrabutler/logger"
-	"terrabutler/settings"
-	"terrabutler/utils"
+
+	"github.com/montblu/terrabutler/internal/logger"
+	"github.com/montblu/terrabutler/internal/settings"
+	"github.com/montblu/terrabutler/internal/utils"
 )
 
 // InceptionInitNeeded checks if the inception site is initialized; exits if not
@@ -36,7 +37,8 @@ func InitInception() {
 		return
 	}
 
-	s := settings.GetSettings()
+	root = os.Getenv("TERRABUTLER_ROOT")
+	s := settings.GetSettingsFromRoot(root)
 	org := s.General.Organization
 	env := s.Environments.Default.Name
 	backendFile := filepath.Join(root, "backends", fmt.Sprintf("%s-%s-inception.tfvars", org, env))

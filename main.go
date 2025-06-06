@@ -1,8 +1,8 @@
 package main
 
 import (
-	"terrabutler/cmd"
-	"terrabutler/logger"
+	"github.com/montblu/terrabutler/internal/cmd"
+	"github.com/montblu/terrabutler/internal/logger"
 )
 
 func main() {

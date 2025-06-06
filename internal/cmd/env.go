@@ -126,22 +126,22 @@ var envRenameCmd = &cobra.Command{
 		newPath := filepath.Join(envsPath, newName)
 
 		if _, err := os.Stat(oldPath); os.IsNotExist(err) {
-			fmt.Printf("Ambiente \"%s\" não existe.\n", oldName)
+			fmt.Printf("Environment \"%s\" does not exist.\n", oldName)
 			return
 		}
 		if _, err := os.Stat(newPath); err == nil {
-			fmt.Printf("Já existe um ambiente chamado \"%s\".\n", newName)
+			fmt.Printf("An environment with this name already exists \"%s\".\n", newName)
 			return
 		}
 		if err := os.Rename(oldPath, newPath); err != nil {
-			fmt.Println("Erro ao renomear:", err)
+			fmt.Println("Error while renaming:", err)
 			return
 		}
-		fmt.Printf("Ambiente \"%s\" foi renomeado para \"%s\" com sucesso.\n", oldName, newName)
+		fmt.Printf("Environment \"%s\" was successfully renamed to \"%s\".\n", oldName, newName)
 		selected, err := GetSelectedEnv()
 		if err == nil && selected == oldName {
 			SetSelectedEnv(newName)
-			fmt.Println("Ambiente selecionado foi atualizado para o novo nome.")
+			fmt.Println("Selected environment was updated to the new name.")
 		}
 	},
 }

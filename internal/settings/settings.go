@@ -40,7 +40,7 @@ type Settings struct {
 	} `koanf:"environments"`
 }
 
-// LoadSettings loads settings using koanf from settings.yaml
+// LoadSettings loads settings from a specified file path using Koanf
 func LoadSettings(path string) (*Settings, error) {
 	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
 		return nil, fmt.Errorf("failed to load settings file: %w", err)
@@ -53,7 +53,7 @@ func LoadSettings(path string) (*Settings, error) {
 	return &settings, nil
 }
 
-// ValidateSettings ensures all required settings are present
+// ValidateSettings checks whether all required fields are present
 func ValidateSettings(settings *Settings) error {
 	if settings.General.Organization == "" {
 		return fmt.Errorf("organization field in general config is required")
@@ -67,8 +67,14 @@ func ValidateSettings(settings *Settings) error {
 	return nil
 }
 
+// GetSettings loads the settings from TERRABUTLER_ROOT/configs/settings.yml
 func GetSettings() *Settings {
 	root := os.Getenv("TERRABUTLER_ROOT")
+	return GetSettingsFromRoot(root)
+}
+
+// GetSettingsFromRoot allows tests or external callers to specify the root directory
+func GetSettingsFromRoot(root string) *Settings {
 	settingsPath := fmt.Sprintf("%s/configs/settings.yml", root)
 
 	settings, err := LoadSettings(settingsPath)

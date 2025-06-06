@@ -1,4 +1,4 @@
-package main
+package tf
 
 import (
 	"context"
@@ -6,19 +6,24 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"terrabutler/cmd"
-	"terrabutler/logger"
-	"terrabutler/requirements"
-	"terrabutler/variables"
+
+	"github.com/montblu/terrabutler/internal/logger"
+	"github.com/montblu/terrabutler/internal/requirements"
+	"github.com/montblu/terrabutler/internal/variables"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/spf13/cobra"
 )
 
-var tfCmd = &cobra.Command{
+// TfCmd is the exported root command for Terraform-related operations
+var TfCmd = &cobra.Command{
 	Use:   "tf",
 	Short: "Execute Terraform commands",
 }
+
+// ------------------------
+// Subcommands
+// ------------------------
 
 var tfInitCmd = &cobra.Command{
 	Use:   "init",
@@ -125,6 +130,10 @@ var tfGenVarsCmd = &cobra.Command{
 	},
 }
 
+// ------------------------
+// Helpers
+// ------------------------
+
 func execTerraformWithSDK(site string, action func(*tfexec.Terraform) error) {
 	root := os.Getenv("TERRABUTLER_ROOT")
 	if root == "" {
@@ -132,7 +141,7 @@ func execTerraformWithSDK(site string, action func(*tfexec.Terraform) error) {
 		os.Exit(1)
 	}
 
-	sitePath := filepath.Join(root, fmt.Sprintf("environments/%s", site))
+	sitePath := filepath.Join(root, "environments", site)
 	if _, err := os.Stat(sitePath); os.IsNotExist(err) {
 		logger.Log.Errorf("Environment directory does not exist: %s", sitePath)
 		os.Exit(1)
@@ -160,13 +169,16 @@ func GetSelectedEnv() string {
 	return strings.TrimSpace(string(data))
 }
 
+// ------------------------
+// Init: register subcommands
+// ------------------------
+
 func init() {
-	cmd.RootCmd.AddCommand(tfCmd)
-	tfCmd.AddCommand(tfInitCmd)
-	tfCmd.AddCommand(tfApplyCmd)
-	tfCmd.AddCommand(tfDestroyCmd)
-	tfCmd.AddCommand(tfOutputCmd)
-	tfCmd.AddCommand(tfShowCmd)
-	tfCmd.AddCommand(tfRefreshCmd)
-	tfCmd.AddCommand(tfGenVarsCmd)
+	TfCmd.AddCommand(tfInitCmd)
+	TfCmd.AddCommand(tfApplyCmd)
+	TfCmd.AddCommand(tfDestroyCmd)
+	TfCmd.AddCommand(tfOutputCmd)
+	TfCmd.AddCommand(tfShowCmd)
+	TfCmd.AddCommand(tfRefreshCmd)
+	TfCmd.AddCommand(tfGenVarsCmd)
 }

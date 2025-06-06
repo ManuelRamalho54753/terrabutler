@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// Wrapper da função CheckRequirements do ficheiro main.go, adaptado para testes
+// Wrapper for the CheckRequirements function from main.go, adapted for testing
 func checkRequirements() {
 	if os.Getenv("TERRABUTLER_ENABLE") != "true" {
 		panic("Terrabutler is not enabled")
@@ -24,10 +24,10 @@ func checkRequirements() {
 }
 
 // ------------------------------
-// TESTES
+// TESTS
 // ------------------------------
 
-// Testa quando todas as variáveis e ficheiros estão corretamente definidos
+// Tests when all environment variables and files are correctly set
 func TestCheckRequirements_AllValid(t *testing.T) {
 	t.Setenv("TERRABUTLER_ENABLE", "true")
 	t.Setenv("TERRABUTLER_ROOT", t.TempDir())
@@ -62,10 +62,10 @@ environments:
 		t.Fatalf("Failed to write settings.yaml: %v", err)
 	}
 
-	checkRequirements() // Deve passar sem pânico
+	checkRequirements()
 }
 
-// Testa quando TERRABUTLER_ENABLE está em branco
+// Tests when TERRABUTLER_ENABLE is empty
 func TestCheckRequirements_MissingEnable(t *testing.T) {
 	t.Setenv("TERRABUTLER_ENABLE", "")
 	t.Setenv("TERRABUTLER_ROOT", t.TempDir())
@@ -79,7 +79,7 @@ func TestCheckRequirements_MissingEnable(t *testing.T) {
 	checkRequirements()
 }
 
-// Testa quando TERRABUTLER_ROOT está em branco
+// Tests when TERRABUTLER_ROOT is empty
 func TestCheckRequirements_MissingRoot(t *testing.T) {
 	t.Setenv("TERRABUTLER_ENABLE", "true")
 	t.Setenv("TERRABUTLER_ROOT", "")
@@ -93,12 +93,12 @@ func TestCheckRequirements_MissingRoot(t *testing.T) {
 	checkRequirements()
 }
 
-// Testa quando o ficheiro settings.yaml está em falta
+// Tests when the settings.yaml file is missing
 func TestCheckRequirements_MissingSettingsFile(t *testing.T) {
 	t.Setenv("TERRABUTLER_ENABLE", "true")
 	t.Setenv("TERRABUTLER_ROOT", t.TempDir())
 
-	// Não cria o ficheiro settings.yaml
+	// Does not create the settings.yaml file
 
 	defer func() {
 		if r := recover(); r == nil {

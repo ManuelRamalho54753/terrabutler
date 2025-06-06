@@ -3,9 +3,10 @@ package requirements
 import (
 	"os"
 	"path/filepath"
-	"terrabutler/logger"
-	"terrabutler/settings"
-	"terrabutler/utils"
+
+	"github.com/montblu/terrabutler/internal/logger"
+	"github.com/montblu/terrabutler/internal/settings"
+	"github.com/montblu/terrabutler/internal/utils"
 )
 
 func CheckRequirements() {
@@ -21,7 +22,7 @@ func CheckRequirements() {
 	}
 
 	// Check if settings.yaml exists
-	settingsPath := filepath.Join(root, "configs", "settings.yaml")
+	settingsPath := filepath.Join(root, "configs", "settings.yml")
 	if !utils.PathExists(settingsPath) {
 		logger.Log.Fatal("Terrabutler can't find your settings file.")
 	}
