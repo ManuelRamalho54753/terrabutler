@@ -20,6 +20,8 @@ var RootCmd = &cobra.Command{
 // Register all subcommands
 func init() {
 	RootCmd.AddCommand(tf.TfCmd)
+	RootCmd.AddCommand(envSwitchCmd)
+
 }
 
 // Execute runs the root command after validating settings
@@ -42,7 +44,7 @@ func validateSettings() {
 		os.Exit(1)
 	}
 
-	settingsPath := fmt.Sprintf("%s/configs/settings.yml", root)
+	settingsPath := fmt.Sprintf("%s/internal/configs/settings.yml", root)
 	_, err := settings.LoadSettings(settingsPath)
 	if err != nil {
 		fmt.Println("Error loading settings.yml file:")

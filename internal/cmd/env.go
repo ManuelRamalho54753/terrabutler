@@ -146,6 +146,21 @@ var envRenameCmd = &cobra.Command{
 	},
 }
 
+var envSwitchCmd = &cobra.Command{
+	Use:   "env switch [env]",
+	Short: "Set default environment for Terraform",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		env := args[0]
+		err := os.WriteFile(".terraform/environment", []byte(env), 0644)
+		if err != nil {
+			fmt.Printf("Error setting default environment: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Current environment set to: %s\n", env)
+	},
+}
+
 func GetSelectedEnv() (string, error) {
 	data, err := os.ReadFile(".terrabutler_env")
 	if err != nil {
@@ -194,5 +209,6 @@ func init() {
 	envCmd.AddCommand(envSelectCmd)
 	envCmd.AddCommand(envShowCmd)
 	envCmd.AddCommand(envRenameCmd)
+	envCmd.AddCommand(envSwitchCmd)
 	RootCmd.AddCommand(versionCmd)
 }

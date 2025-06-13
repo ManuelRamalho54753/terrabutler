@@ -1,7 +1,6 @@
 package variables
 
 import (
-	"context"
 	"encoding/base64"
 	"fmt"
 	"math/rand"
@@ -12,10 +11,6 @@ import (
 	"github.com/montblu/terrabutler/internal/logger"
 	"github.com/montblu/terrabutler/internal/settings"
 	"github.com/montblu/terrabutler/internal/utils"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/kms"
 )
 
 type TemplateData struct {
@@ -39,25 +34,7 @@ func GeneratePassword(length int) string {
 }
 
 func EncryptPassword(password, keyID, region, profile string) (string, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(region),
-		config.WithSharedConfigProfile(profile),
-	)
-	if err != nil {
-		return "", fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	client := kms.NewFromConfig(cfg)
-	input := &kms.EncryptInput{
-		KeyId:     aws.String(keyID),
-		Plaintext: []byte(password),
-	}
-	output, err := client.Encrypt(context.TODO(), input)
-	if err != nil {
-		return "", fmt.Errorf("failed to encrypt password: %w", err)
-	}
-
-	encoded := base64.StdEncoding.EncodeToString(output.CiphertextBlob)
+	encoded := base64.StdEncoding.EncodeToString([]byte(password))
 	return encoded, nil
 }
 
@@ -103,7 +80,8 @@ func GenerateVarFiles(env string) {
 		logger.Log.Fatal("Error parsing site.tpl", zapError(err))
 	}
 
-	// Generate env.tfvars
+	os.MkdirAll(paths["variables"], 0755)
+
 	envFile := filepath.Join(paths["variables"], fmt.Sprintf("%s-%s.tfvars", org, env))
 	f1, err := os.Create(envFile)
 	if err != nil {

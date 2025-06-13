@@ -38,6 +38,7 @@ type Settings struct {
 			} `koanf:"secrets"`
 		} `koanf:"temporary"`
 	} `koanf:"environments"`
+	DefaultEnvironment string `koanf:"default_environment"`
 }
 
 // LoadSettings loads settings from a specified file path using Koanf
@@ -75,7 +76,7 @@ func GetSettings() *Settings {
 
 // GetSettingsFromRoot allows tests or external callers to specify the root directory
 func GetSettingsFromRoot(root string) *Settings {
-	settingsPath := fmt.Sprintf("%s/configs/settings.yml", root)
+	settingsPath := fmt.Sprintf("%s/internal/configs/settings.yml", root)
 
 	settings, err := LoadSettings(settingsPath)
 	if err != nil {

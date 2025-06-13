@@ -6,16 +6,18 @@ sites:
   ordered:
     - site1
     - site2
-    - inception
 
 environments:
   default:
-    domain: "example.com"
     name: "dev"
+    domain: "example.com"
     profile_name: "default"
     region: "eu-west-1"
+    permanent: true
 
   temporary:
     secrets:
-      firebase_credentials: "base64-encoded-json"
-      mail_password: "supersecretpassword"
+      firebase_credentials: "base64-creds"
+      mail_password: "super-secret"
+
+default_environment: dev

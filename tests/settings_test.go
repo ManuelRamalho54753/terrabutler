@@ -34,9 +34,9 @@ environments:
       firebase_credentials: firebase-key
       mail_password: mail-secret
 `
-	settingsPath := filepath.Join(tmp, "settings.yaml")
+	settingsPath := filepath.Join(tmp, "settings.yml")
 	if err := os.WriteFile(settingsPath, []byte(yamlContent), 0644); err != nil {
-		t.Fatalf("failed to write settings.yaml: %v", err)
+		t.Fatalf("failed to write settings.yml: %v", err)
 	}
 
 	s, err := settings.LoadSettings(settingsPath)
@@ -50,7 +50,7 @@ environments:
 
 func TestLoadSettings_InvalidFile(t *testing.T) {
 	tmp := t.TempDir()
-	settingsPath := filepath.Join(tmp, "invalid.yaml")
+	settingsPath := filepath.Join(tmp, "invalid.yml")
 	if err := os.WriteFile(settingsPath, []byte("invalid: [:"), 0644); err != nil {
 		t.Fatalf("failed to write invalid file: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestGetSettings_PanicOnInvalidData(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Expected panic on invalid YAML data, got none")
+			t.Error("Expected panic on invalid yml data, got none")
 		}
 	}()
 

@@ -29,16 +29,25 @@ var tfInitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize Terraform for the selected environment",
 	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		requirements.CheckRequirements()
 		envName := GetSelectedEnv()
 		if envName == "" {
-			fmt.Println("No environment selected. Please use `terrabutler env select [name]` first.")
-			os.Exit(1)
+			cmd.PrintErrln("No environment selected. Please use `terrabutler env select [name]` first.")
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			return fmt.Errorf("no environment selected")
 		}
-		execTerraformWithSDK(envName, func(tf *tfexec.Terraform) error {
+		err := execTerraformWithSDK(envName, func(tf *tfexec.Terraform) error {
 			return tf.Init(context.Background(), tfexec.Upgrade(true), tfexec.Reconfigure(true))
 		})
+		if err != nil {
+			cmd.PrintErrf("Terraform init failed: %v\n", err)
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			return err
+		}
+		return nil
 	},
 }
 
@@ -49,9 +58,13 @@ var tfApplyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		requirements.CheckRequirements()
 		site := args[0]
-		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
+		err := execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
 			return tf.Apply(context.Background())
 		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Terraform apply failed: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
@@ -62,9 +75,13 @@ var tfDestroyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		requirements.CheckRequirements()
 		site := args[0]
-		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
+		err := execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
 			return tf.Destroy(context.Background())
 		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Terraform destroy failed: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
@@ -75,7 +92,7 @@ var tfOutputCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		requirements.CheckRequirements()
 		site := args[0]
-		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
+		err := execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
 			outputs, err := tf.Output(context.Background())
 			if err != nil {
 				return err
@@ -85,6 +102,10 @@ var tfOutputCmd = &cobra.Command{
 			}
 			return nil
 		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Terraform output failed: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
@@ -95,7 +116,7 @@ var tfShowCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		requirements.CheckRequirements()
 		site := args[0]
-		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
+		err := execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
 			output, err := tf.Show(context.Background())
 			if err != nil {
 				return err
@@ -103,6 +124,10 @@ var tfShowCmd = &cobra.Command{
 			fmt.Println(output)
 			return nil
 		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Terraform show failed: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
@@ -113,9 +138,13 @@ var tfRefreshCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		requirements.CheckRequirements()
 		site := args[0]
-		execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
+		err := execTerraformWithSDK(site, func(tf *tfexec.Terraform) error {
 			return tf.Refresh(context.Background())
 		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Terraform refresh failed: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
@@ -134,31 +163,28 @@ var tfGenVarsCmd = &cobra.Command{
 // Helpers
 // ------------------------
 
-func execTerraformWithSDK(site string, action func(*tfexec.Terraform) error) {
+func execTerraformWithSDK(site string, action func(*tfexec.Terraform) error) error {
 	root := os.Getenv("TERRABUTLER_ROOT")
 	if root == "" {
-		logger.Log.Error("TERRABUTLER_ROOT is not set")
-		os.Exit(1)
+		return fmt.Errorf("TERRABUTLER_ROOT is not set")
 	}
 
 	sitePath := filepath.Join(root, "environments", site)
 	if _, err := os.Stat(sitePath); os.IsNotExist(err) {
-		logger.Log.Errorf("Environment directory does not exist: %s", sitePath)
-		os.Exit(1)
+		return fmt.Errorf("Environment directory does not exist: %s", sitePath)
 	}
 
 	tf, err := tfexec.NewTerraform(sitePath, "terraform")
 	if err != nil {
-		logger.Log.Errorf("Failed to initialize Terraform SDK: %v", err)
-		os.Exit(1)
+		return fmt.Errorf("Failed to initialize Terraform SDK: %v", err)
 	}
 
 	if err := action(tf); err != nil {
-		logger.Log.Errorf("Error running Terraform command: %v", err)
-		os.Exit(1)
+		return fmt.Errorf("Error running Terraform command: %v", err)
 	}
 
 	logger.Log.Infof("Terraform command executed successfully for environment: %s", site)
+	return nil
 }
 
 func GetSelectedEnv() string {

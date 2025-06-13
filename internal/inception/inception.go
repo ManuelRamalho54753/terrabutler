@@ -2,76 +2,111 @@ package inception
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"text/template"
 
 	"github.com/montblu/terrabutler/internal/logger"
 	"github.com/montblu/terrabutler/internal/settings"
-	"github.com/montblu/terrabutler/internal/utils"
 )
 
-// InceptionInitNeeded checks if the inception site is initialized; exits if not
-func InceptionInitNeeded() {
-	if !inceptionInitCheck() {
-		fmt.Println("\nInception is not initialized.")
-		fmt.Println("Please run `terrabutler init` to initialize it.")
-		os.Exit(1)
-	}
-}
-
-// InitInception initializes the inception site with terraform init and sets default env
-func InitInception() {
+// InitInception initializes a site directory with tfvars and environment file
+func InitInception(org, site string) {
 	root := os.Getenv("TERRABUTLER_ROOT")
 	if root == "" {
 		logger.Log.Fatal("TERRABUTLER_ROOT environment variable is not set")
 	}
 
-	inceptionPath := filepath.Join(root, "site_inception")
-	terraformDir := filepath.Join(inceptionPath, ".terraform")
-	environmentFile := filepath.Join(terraformDir, "environment")
+	s := settings.GetSettingsFromRoot(root)
+	org = s.General.Organization
+	env := s.Environments.Default.Name
+	region := s.Environments.Default.Region
+	profile := s.Environments.Default.ProfileName
 
-	// If already initialized, exit early
-	if utils.PathExists(environmentFile) {
-		logger.Log.Infof("Inception site already initialized at %s", inceptionPath)
-		return
+	// DEBUG: print the values to confirm they are loaded correctly
+	fmt.Println("Org:", org)
+	fmt.Println("Env:", env)
+	fmt.Println("Region:", region)
+	fmt.Println("ProfileName:", profile)
+
+	// fallback protection in case the values are missing
+	if org == "" || env == "" || region == "" || profile == "" {
+		logger.Log.Fatalf("Missing values for Org: %q, Env: %q, Region: %q, ProfileName: %q", org, env, region, profile)
 	}
 
-	root = os.Getenv("TERRABUTLER_ROOT")
+	sitePath := filepath.Join(root, "environments", site)
+	terraformDir := filepath.Join(sitePath, ".terraform")
+	environmentFile := filepath.Join(terraformDir, "environment")
+	tfvarsFile := filepath.Join(sitePath, "terraform.tfvars")
+	envTplPath := filepath.Join(root, "internal", "configs", "templates", "env.tpl")
+	defaultTFPath := filepath.Join(root, "internal", "configs", "default_tf_files")
+
+	// Create directories (even if site exists, allow regenerating content)
+	if err := os.MkdirAll(terraformDir, 0755); err != nil {
+		logger.Log.Fatalf("Failed to create site directories: %v", err)
+	}
+
+	// Create .terraform/environment file
+	if err := os.WriteFile(environmentFile, []byte(env), 0644); err != nil {
+		logger.Log.Fatalf("Failed to write .terraform/environment: %v", err)
+	}
+
+	vars := map[string]string{
+		"Org":         org,
+		"Env":         env,
+		"Region":      region,
+		"ProfileName": profile,
+	}
+
+	// Generate terraform.tfvars from env.tpl
+	envTpl, err := template.ParseFiles(envTplPath)
+	if err != nil {
+		logger.Log.Fatalf("Failed to read env.tpl template: %v", err)
+	}
+	tfFile, err := os.Create(tfvarsFile)
+	if err != nil {
+		logger.Log.Fatalf("Failed to create terraform.tfvars: %v", err)
+	}
+	defer tfFile.Close()
+	if err := envTpl.Execute(tfFile, vars); err != nil {
+		logger.Log.Fatalf("Failed to generate terraform.tfvars: %v", err)
+	}
+
+	// Copy default .tf files (overwrite always)
+	entries, err := os.ReadDir(defaultTFPath)
+	if err != nil {
+		logger.Log.Fatalf("Failed to read default_tf_files: %v", err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			src := filepath.Join(defaultTFPath, entry.Name())
+			dst := filepath.Join(sitePath, entry.Name())
+			data, err := os.ReadFile(src)
+			if err != nil {
+				logger.Log.Fatalf("Failed to read file %s: %v", src, err)
+			}
+			if err := os.WriteFile(dst, data, fs.ModePerm); err != nil {
+				logger.Log.Fatalf("Failed to write file %s: %v", dst, err)
+			}
+		}
+	}
+
+	logger.Log.Infof("Site %s initialized successfully at: %s", site, sitePath)
+}
+
+// InitAllInceptionSites initializes all sites listed in settings.yml
+func InitAllInceptionSites() {
+	root := os.Getenv("TERRABUTLER_ROOT")
+	if root == "" {
+		logger.Log.Fatal("TERRABUTLER_ROOT environment variable is not set")
+	}
+
 	s := settings.GetSettingsFromRoot(root)
 	org := s.General.Organization
-	env := s.Environments.Default.Name
-	backendFile := filepath.Join(root, "backends", fmt.Sprintf("%s-%s-inception.tfvars", org, env))
 
-	// Ensure .terraform folder exists before writing environment file
-	if err := os.MkdirAll(terraformDir, 0755); err != nil {
-		logger.Log.Fatalf("Error creating .terraform directory: %v", err)
+	for _, site := range s.Sites.Ordered {
+		InitInception(org, site)
 	}
-
-	logger.Log.Infof("Running `terraform init` in %s", inceptionPath)
-	cmd := exec.Command("terraform", "init", "-backend-config", backendFile)
-	cmd.Dir = inceptionPath
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		logger.Log.Fatalf("Error running terraform init: %v", err)
-	}
-
-	if err := os.WriteFile(environmentFile, []byte(env), 0644); err != nil {
-		logger.Log.Fatalf("Error writing .terraform/environment: %v", err)
-	}
-
-	logger.Log.Infof("Inception initialized successfully in: %s", inceptionPath)
-}
-
-// inceptionInitCheck returns true if .terraform/environment exists
-func inceptionInitCheck() bool {
-	root := os.Getenv("TERRABUTLER_ROOT")
-	if root == "" {
-		logger.Log.Fatal("TERRABUTLER_ROOT environment variable is not set")
-	}
-
-	environmentFile := filepath.Join(root, "site_inception", ".terraform", "environment")
-	return utils.PathExists(environmentFile)
 }

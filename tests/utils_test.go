@@ -65,7 +65,7 @@ func TestGetPaths_ReturnsCorrectPaths(t *testing.T) {
 
 	expected := map[string]string{
 		"root":        root,
-		"settings":    filepath.Join(root, "configs", "settings.yaml"),
+		"settings":    filepath.Join(root, "configs", "settings.yml"),
 		"inception":   filepath.Join(root, "site_inception"),
 		"backends":    filepath.Join(root, "configs", "backends"),
 		"variables":   filepath.Join(root, "configs", "variables"),

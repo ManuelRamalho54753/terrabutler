@@ -17,9 +17,9 @@ func checkRequirements() {
 		panic("TERRABUTLER_ROOT is not set")
 	}
 
-	settingsPath := filepath.Join(root, "configs", "settings.yaml")
+	settingsPath := filepath.Join(root, "configs", "settings.yml")
 	if _, err := os.Stat(settingsPath); os.IsNotExist(err) {
-		panic("settings.yaml is missing")
+		panic("settings.yml is missing")
 	}
 }
 
@@ -57,9 +57,9 @@ environments:
       firebase_credentials: "somekey"
       mail_password: "somepass"
 `)
-	err = os.WriteFile(filepath.Join(settingsDir, "settings.yaml"), settingsContent, 0644)
+	err = os.WriteFile(filepath.Join(settingsDir, "settings.yml"), settingsContent, 0644)
 	if err != nil {
-		t.Fatalf("Failed to write settings.yaml: %v", err)
+		t.Fatalf("Failed to write settings.yml: %v", err)
 	}
 
 	checkRequirements()

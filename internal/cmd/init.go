@@ -10,7 +10,8 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize the inception site",
 	Run: func(cmd *cobra.Command, args []string) {
-		inception.InitInception()
+		inception.InitAllInceptionSites()
+
 	},
 }
 

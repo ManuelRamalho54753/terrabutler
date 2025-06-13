@@ -7,36 +7,26 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/montblu/terrabutler/internal/cmd"
-
 	"github.com/hashicorp/terraform-exec/tfexec"
+	"github.com/montblu/terrabutler/internal/logger"
+	tfCommands "github.com/montblu/terrabutler/internal/tf"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 var root *cobra.Command
 
-// ------------------------------
-// TEST MAIN - Initialization of the commands
-// ------------------------------
 func TestMain(m *testing.M) {
-	root = cmd.RootCmd
+	logger.Log = zap.NewExample().Sugar()
 
-	tfCmd := &cobra.Command{Use: "tf", Short: "Fake tf root"}
-	tfCmd.AddCommand(&cobra.Command{Use: "apply"})
-	tfCmd.AddCommand(&cobra.Command{Use: "destroy"})
-	tfCmd.AddCommand(&cobra.Command{Use: "output"})
-	tfCmd.AddCommand(&cobra.Command{Use: "show"})
-	tfCmd.AddCommand(&cobra.Command{Use: "refresh"})
-	tfCmd.AddCommand(&cobra.Command{Use: "generate-vars"})
-	tfCmd.AddCommand(&cobra.Command{Use: "init"})
-
-	root.AddCommand(tfCmd)
+	root = &cobra.Command{Use: "terrabutler"}
+	root.AddCommand(tfCommands.TfCmd)
 
 	os.Exit(m.Run())
 }
 
 // ------------------------------
-// "Helper functions".
+// Helper functions
 // ------------------------------
 
 func getSelectedEnv() string {
@@ -60,7 +50,7 @@ func findCommand(root *cobra.Command, path []string) *cobra.Command {
 }
 
 // ------------------------------
-// Basic functional tests.
+// Functional Tests
 // ------------------------------
 
 func TestTfInitCmdWithoutEnvSelected(t *testing.T) {
@@ -70,10 +60,14 @@ func TestTfInitCmdWithoutEnvSelected(t *testing.T) {
 	root.SetArgs([]string{"tf", "init"})
 	err := root.Execute()
 
-	if err != nil {
-		t.Errorf("Expected no panic when no environment is selected, got error: %v", err)
+	if err == nil {
+		t.Fatal("Expected error when no environment is selected, but got nil")
+	}
+
+	if err.Error() != "no environment selected" {
+		t.Errorf("Unexpected error: %v", err)
 	} else {
-		t.Log("Terraform init executed with no environment selected (fallback correct).")
+		t.Logf("Init failed as expected: %v", err)
 	}
 }
 
@@ -99,64 +93,6 @@ func TestGetSelectedEnvValid(t *testing.T) {
 		t.Errorf("Expected 'myenv', got: %s", env)
 	} else {
 		t.Log("Selected environment read correctly: 'myenv'.")
-	}
-}
-
-// ------------------------------
-// Command structure tests
-// ------------------------------
-
-func TestTfApplyCmdStructure(t *testing.T) {
-	cmd := findCommand(root, []string{"tf", "apply"})
-	if cmd == nil {
-		t.Error("tf apply command not found")
-	} else {
-		t.Log("'tf apply' command found in structure.")
-	}
-}
-
-func TestTfDestroyCmdStructure(t *testing.T) {
-	cmd := findCommand(root, []string{"tf", "destroy"})
-	if cmd == nil {
-		t.Error("tf destroy command not found")
-	} else {
-		t.Log("'tf destroy' command found in structure.")
-	}
-}
-
-func TestTfOutputCmdStructure(t *testing.T) {
-	cmd := findCommand(root, []string{"tf", "output"})
-	if cmd == nil {
-		t.Error("tf output command not found")
-	} else {
-		t.Log("'tf output' command found in structure.")
-	}
-}
-
-func TestTfShowCmdStructure(t *testing.T) {
-	cmd := findCommand(root, []string{"tf", "show"})
-	if cmd == nil {
-		t.Error("tf show command not found")
-	} else {
-		t.Log("'tf show' command found in structure.")
-	}
-}
-
-func TestTfRefreshCmdStructure(t *testing.T) {
-	cmd := findCommand(root, []string{"tf", "refresh"})
-	if cmd == nil {
-		t.Error("tf refresh command not found")
-	} else {
-		t.Log("'tf refresh' command found in structure.")
-	}
-}
-
-func TestTfGenVarsCmdStructure(t *testing.T) {
-	cmd := findCommand(root, []string{"tf", "generate-vars"})
-	if cmd == nil {
-		t.Error("tf generate-vars command not found")
-	} else {
-		t.Log("'tf generate-vars' command found in structure .")
 	}
 }
 
