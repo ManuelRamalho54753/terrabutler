@@ -25,11 +25,12 @@ func GetCurrentEnv(root string) (string, error) {
 // GetPaths returns a map with all key project paths based on TERRABUTLER_ROOT
 func GetPaths(root string) map[string]string {
 	return map[string]string{
-		"root":        root,
-		"settings":    filepath.Join(root, "configs", "settings.yml"),
-		"inception":   filepath.Join(root, "site_inception"),
-		"backends":    filepath.Join(root, "configs", "backends"),
-		"variables":   filepath.Join(root, "configs", "variables"),
-		"environment": filepath.Join(root, ".terraform", "environment"),
+		"root":         root,
+		"settings":     filepath.Join(root, "internal", "configs", "settings.yml"),
+		"inception":    filepath.Join(root, "site_inception"),
+		"backends":     filepath.Join(root, "configs", "backends"),
+		"variables":    filepath.Join(root, "configs", "variables"),
+		"environment":  filepath.Join(root, ".terraform", "environment"),
+		"environments": filepath.Join(root, "environments"),
 	}
 }

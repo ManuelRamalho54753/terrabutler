@@ -7,6 +7,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/montblu/terrabutler/internal/settings"
+	"github.com/montblu/terrabutler/internal/utils"
+	"github.com/montblu/terrabutler/internal/variables"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +30,64 @@ var envNewCmd = &cobra.Command{
 		}
 		fmt.Println("Environment created successfully:", name)
 	},
+}
+
+func RunEnvNew(name string) error {
+	if !IsValidEnvName(name) {
+		return fmt.Errorf("Invalid environment name. Use only lowercase letters, numbers, hyphens or underscores.")
+	}
+
+	root := os.Getenv("TERRABUTLER_ROOT")
+	paths := utils.GetPaths(root)
+	settingsPath := paths["settings"]
+
+	cfg, err := settings.LoadSettings(settingsPath)
+	if err != nil {
+		return fmt.Errorf("Error loading settings: %v", err)
+	}
+
+	sites := cfg.Sites.Ordered
+	if Contains(sites, "inception") {
+		sites = Remove(sites, "inception")
+	}
+
+	defaultFiles := filepath.Join(paths["root"], "internal", "configs", "default_tf_files")
+
+	for _, site := range sites {
+		sitePath := filepath.Join(paths["environments"], name, site)
+		err := os.MkdirAll(sitePath, 0755)
+		if err != nil {
+			return fmt.Errorf("Failed to create site directory: %v", err)
+		}
+
+		err = copyTerraformFiles(defaultFiles, sitePath)
+		if err != nil {
+			return fmt.Errorf("Failed to copy Terraform files: %v", err)
+		}
+	}
+
+	variables.GenerateVarFiles(name)
+	return nil
+}
+
+func copyTerraformFiles(srcDir, dstDir string) error {
+	files, err := os.ReadDir(srcDir)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		srcPath := filepath.Join(srcDir, file.Name())
+		dstPath := filepath.Join(dstDir, file.Name())
+		srcData, err := os.ReadFile(srcPath)
+		if err != nil {
+			return err
+		}
+		err = os.WriteFile(dstPath, srcData, 0644)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 var envListCmd = &cobra.Command{
@@ -178,13 +239,6 @@ func IsValidEnvName(name string) bool {
 	return matched
 }
 
-func RunEnvNew(name string) error {
-	if !IsValidEnvName(name) {
-		return fmt.Errorf("Invalid environment name. Use only lowercase letters, numbers, hyphens or underscores.")
-	}
-	return CreateEnv(name)
-}
-
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show the version of terrabutler",
@@ -199,6 +253,25 @@ func EnvCmd() *cobra.Command {
 
 func EnvRenameCmd() *cobra.Command {
 	return envRenameCmd
+}
+
+func Contains(slice []string, item string) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
+
+func Remove(slice []string, item string) []string {
+	result := []string{}
+	for _, v := range slice {
+		if v != item {
+			result = append(result, v)
+		}
+	}
+	return result
 }
 
 func init() {

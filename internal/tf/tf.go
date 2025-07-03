@@ -169,7 +169,12 @@ func execTerraformWithSDK(site string, action func(*tfexec.Terraform) error) err
 		return fmt.Errorf("TERRABUTLER_ROOT is not set")
 	}
 
-	sitePath := filepath.Join(root, "environments", site)
+	env := GetSelectedEnv()
+	if env == "" {
+		return fmt.Errorf("No environment selected. Please use `terrabutler env select [name]` first.")
+	}
+
+	sitePath := filepath.Join(root, "environments", env, site)
 	if _, err := os.Stat(sitePath); os.IsNotExist(err) {
 		return fmt.Errorf("Environment directory does not exist: %s", sitePath)
 	}
@@ -183,7 +188,7 @@ func execTerraformWithSDK(site string, action func(*tfexec.Terraform) error) err
 		return fmt.Errorf("Error running Terraform command: %v", err)
 	}
 
-	logger.Log.Infof("Terraform command executed successfully for environment: %s", site)
+	logger.Log.Infof("Terraform command executed successfully for site '%s' in environment '%s'", site, env)
 	return nil
 }
 

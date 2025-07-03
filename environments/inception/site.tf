@@ -1,6 +1,0 @@
-site_name      = "inception"
-organization   = "<no value>"
-environment    = "<no value>"
-firebase_creds = "<no value>"
-mail_password  = "<no value>"
-secret_token   = "<no value>"

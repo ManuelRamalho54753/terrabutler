@@ -70,7 +70,8 @@ func GenerateVarFiles(env string) {
 		logger.Log.Fatal("Error encrypting password", zapError(err))
 	}
 
-	tmplDir := filepath.Join(paths["root"], "configs", "templates")
+	tmplDir := filepath.Join(paths["root"], "internal", "configs", "templates")
+
 	tmplEnv, err := template.ParseFiles(filepath.Join(tmplDir, "env.tpl"))
 	if err != nil {
 		logger.Log.Fatal("Error parsing env.tpl", zapError(err))
@@ -80,8 +81,10 @@ func GenerateVarFiles(env string) {
 		logger.Log.Fatal("Error parsing site.tpl", zapError(err))
 	}
 
+	// Cria diretório de variáveis se necessário
 	os.MkdirAll(paths["variables"], 0755)
 
+	// Gera ficheiro de variáveis para o ambiente (global)
 	envFile := filepath.Join(paths["variables"], fmt.Sprintf("%s-%s.tfvars", org, env))
 	f1, err := os.Create(envFile)
 	if err != nil {
@@ -95,9 +98,12 @@ func GenerateVarFiles(env string) {
 		Profile:      profile,
 	})
 
-	// Generate site tfvars
+	// Gera ficheiros de variáveis para cada site diretamente dentro da pasta do site
 	for _, site := range sites {
-		file := filepath.Join(paths["variables"], fmt.Sprintf("%s-%s-%s.tfvars", org, env, site))
+		siteDir := filepath.Join(paths["root"], "environments", env, site)
+		os.MkdirAll(siteDir, 0755)
+
+		file := filepath.Join(siteDir, "terraform.tfvars")
 		fh, err := os.Create(file)
 		if err != nil {
 			logger.Log.Error("Error creating site tfvars file", zapError(err))
